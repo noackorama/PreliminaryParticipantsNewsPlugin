@@ -1,5 +1,4 @@
 <?php
-require_once 'lib/meine_seminare_func.inc.php';
 
 class PreliminaryParticipantsNewsPlugin extends StudipPlugin implements SystemPlugin
 {
@@ -22,14 +21,13 @@ class PreliminaryParticipantsNewsPlugin extends StudipPlugin implements SystemPl
                 if (!is_null($nav)) {
                     $img = $nav->getImage();
                     if(!empty($img)) {
-                        $my_obj[$course]["image"] = $img['src'];
-                        $my_obj[$course]["msg"] = studip_utf8encode($img['title']);
+                        $my_obj[$course]["image"] = $img instanceOf Icon ? $img->asImagePath() : $img['src'];
+                        $my_obj[$course]["msg"] = studip_utf8encode($img instanceOf Icon ? $img->getAttributes()['title'] : $img['title']);
                     }
                 }
             }
             if (match_route('dispatch.php/my_courses')) {
                 $courses        = json_encode($my_obj);
-
                 $current_course = 'null';
             } else if (in_array(Request::option('sem_id'), array_keys($my_obj))) {
                 $current_course = json_encode($my_obj[Request::option('sem_id')]);
@@ -46,20 +44,6 @@ jQuery('document').ready(function(){
     var cc = $current_course;
     if (cc) {
         jQuery('section.contentbox').first().before('$content_box');
-        jQuery('section.contentbox article h1 a').click(function(e) {
-            e.preventDefault();
-            var article = jQuery(this).closest('article');
-            // If the contentbox article is new send an ajax request
-            if (article.hasClass('new')) {
-                jQuery.ajax({
-                    type: 'POST',
-                    url: STUDIP.URLHelper.getURL(decodeURIComponent(article.data('visiturl') + jQuery(this).attr('href')))
-                });
-            }
-
-            // Open the contentbox
-            article.toggleClass('open').removeClass('new');
-        });
     }
 });
 EOT;
@@ -80,21 +64,6 @@ EOT;
         header('Content-Type:text/html;charset=windows-1252');
         echo $this->render_news_contentbox($id);
         echo "<script>
-        jQuery('section.contentbox article h1 a').click(function(e) {
-            e.preventDefault();
-            var article = jQuery(this).closest('article');
-            // If the contentbox article is new send an ajax request
-            if (article.hasClass('new')) {
-                jQuery.ajax({
-                    type: 'POST',
-                    url: STUDIP.URLHelper.getURL(decodeURIComponent(article.data('visiturl') + jQuery(this).attr('href')))
-                });
-            }
-
-            // Open the contentbox
-            article.toggleClass('open').removeClass('new');
-        });
-
         if (jQuery('section.contentbox footer form').attr('action')) {
             var newhref = STUDIP.ABSOLUTE_URI_STUDIP + 'plugins.php/PreliminaryParticipantsNewsPlugin/get_news_dialog/' + '$id' + jQuery('section.contentbox footer form').attr('action');
         } else {
