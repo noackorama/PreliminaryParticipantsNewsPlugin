@@ -4,7 +4,7 @@ class PreliminaryParticipantsNewsPlugin extends StudipPlugin implements SystemPl
 {
     function __construct()
     {
-
+        parent::__construct();
         if (!$GLOBALS['perm']->have_perm('admin')
             && (match_route('dispatch.php/my_courses') || match_route('dispatch.php/course/details'))) {
             $user_id = $GLOBALS['user']->id;
@@ -22,7 +22,7 @@ class PreliminaryParticipantsNewsPlugin extends StudipPlugin implements SystemPl
                     $img = $nav->getImage();
                     if(!empty($img)) {
                         $my_obj[$course]["image"] = $img instanceOf Icon ? $img->asImagePath() : $img['src'];
-                        $my_obj[$course]["msg"] = studip_utf8encode($img instanceOf Icon ? $img->getAttributes()['title'] : $img['title']);
+                        $my_obj[$course]["msg"] = $img instanceOf Icon ? $img->getAttributes()['title'] : $img['title'];
                     }
                 }
             }
@@ -32,18 +32,18 @@ class PreliminaryParticipantsNewsPlugin extends StudipPlugin implements SystemPl
             } else if (in_array(Request::option('sem_id'), array_keys($my_obj))) {
                 $current_course = json_encode($my_obj[Request::option('sem_id')]);
                 $courses        = '{}';
-                $titel          = _("Ankündigungen");
+                $titel          = _("AnkÃ¼ndigungen");
                 $content_box    = addcslashes($this->render_news_contentbox(Request::option('sem_id')), "'\n\r");
             }
 
             $script = <<<EOT
 jQuery('document').ready(function(){
     jQuery.each($courses, function(id,data) {
-       jQuery('a[href*="sem_id=' + id + '"]').after('<div style="float:right"><a data-dialog href="' + STUDIP.ABSOLUTE_URI_STUDIP + 'plugins.php/PreliminaryParticipantsNewsPlugin/get_news_dialog/' + id +'"><img src="' + data.image +  '" /></a></div>');
+       jQuery('a[href*="sem_id=' + id + '"]').after('<div style="float:right"><a data-dialog href="' + STUDIP.ABSOLUTE_URI_STUDIP + 'plugins.php/PreliminaryParticipantsNewsPlugin/get_news_dialog/' + id +'"><img style="cursor: pointer" width="20" height="20" src="' + data.image +  '" /></a></div>');
     });
     var cc = $current_course;
     if (cc) {
-        jQuery('section.contentbox').first().before('$content_box');
+        jQuery('article.studip').first().before('$content_box');
     }
 });
 EOT;
@@ -61,18 +61,17 @@ EOT;
         if (!$id || preg_match('/[^\\w,-]/', $id)) {
             throw new Exception('wrong parameter');
         }
-        header('Content-Type:text/html;charset=windows-1252');
         echo $this->render_news_contentbox($id);
         echo "<script>
-        if (jQuery('section.contentbox footer form').attr('action')) {
-            var newhref = STUDIP.ABSOLUTE_URI_STUDIP + 'plugins.php/PreliminaryParticipantsNewsPlugin/get_news_dialog/' + '$id' + jQuery('section.contentbox footer form').attr('action');
+        if (jQuery('footer section.comments form').attr('action')) {
+            var newhref = STUDIP.ABSOLUTE_URI_STUDIP + 'plugins.php/PreliminaryParticipantsNewsPlugin/get_news_dialog/' + '$id' + jQuery('footer section.comments form').attr('action');
         } else {
-            var newhref = STUDIP.ABSOLUTE_URI_STUDIP + 'plugins.php/PreliminaryParticipantsNewsPlugin/get_news_dialog/' + '$id' + jQuery('section.contentbox footer a').attr('href');
+            var newhref = STUDIP.ABSOLUTE_URI_STUDIP + 'plugins.php/PreliminaryParticipantsNewsPlugin/get_news_dialog/' + '$id' + jQuery('footer section.comments a').attr('href');
         }
-        jQuery('section.contentbox footer a').attr('data-dialog', 1);
-        jQuery('section.contentbox footer a').attr('href', newhref);
-        jQuery('section.contentbox footer form').attr('action', newhref);
-        jQuery('section.contentbox footer form').attr('data-dialog', 1);
+        jQuery('footer section.comments a').attr('data-dialog', 1);
+        jQuery('footer section.comments a').attr('href', newhref);
+        jQuery('footer section.comments form').attr('action', newhref);
+        jQuery('footer section.comments form').attr('data-dialog', 1);
         </script>";
     }
 
@@ -92,7 +91,7 @@ EOT;
         $perm = false;
         $news = StudipNews::GetNewsByRange($range_id, false, true);
         $count_all_news  = count($news);
-        $rss_id = get_config('NEWS_RSS_EXPORT_ENABLE') ? StudipNews::GetRssIdFromRangeId($range_id) : false;
+        $rss_id = Config::get()->NEWS_RSS_EXPORT_ENABLE ? StudipNews::GetRssIdFromRangeId($range_id) : false;
         $range = $range_id;
         $tf = new Flexi_TemplateFactory($GLOBALS['STUDIP_BASE_PATH'] . '/app/views');
         $template = $tf->open('news/display.php');
